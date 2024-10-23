@@ -2,6 +2,7 @@
 using ConsoleApplication.Domain.Interfaces.Repositories;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ConsoleApplication.Application.Services
@@ -19,7 +20,7 @@ namespace ConsoleApplication.Application.Services
             this.locationInfoRepository = locationInfoRepository;
         }
 
-        private async Task<LocationInfo> GetAsync()
+        private async Task<LocationInfo> GetOrDefaultAsync()
         {
             if (configuration == null || string.IsNullOrEmpty(configuration.LocationInfoUrl))
                 return null;
@@ -29,23 +30,55 @@ namespace ConsoleApplication.Application.Services
 
             var body = await locationInfoRepository.GetAsync(configuration.LocationInfoUrl);
 
-            var result = JObject.Parse(body);
-
-            if (result == null)
+            if (string.IsNullOrEmpty(body))
                 return null;
 
-            var locationInfo = result["address"].ToObject<LocationInfo>();
+            var isValidJson = IsValidJson(body);
+
+            if (!isValidJson)
+                return null;
+
+            var result = JObject.Parse(body);
+
+            var locationInfo = GetLocationInfoOrDefault(result);
 
             return locationInfo;
         }
 
+        private LocationInfo GetLocationInfoOrDefault(JObject result)
+        {
+            try
+            {
+                return result["address"].ToObject<LocationInfo>();
+            }
+            catch(Exception e)
+            {
+                return null;
+            }
+        }
+
         public async Task<string> GetAsStringAsync()
         {
-            var location = await GetAsync();
+            var location = await GetOrDefaultAsync();
             if (location == null)
                 return null;
 
             return location.ToString();
+        }
+
+        public bool IsValidJson(string jsonString)
+        {
+            try
+            {
+                using (JsonDocument doc = JsonDocument.Parse(jsonString))
+                {
+                    return true;
+                }
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
     }
 }
