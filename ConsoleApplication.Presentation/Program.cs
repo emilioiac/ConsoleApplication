@@ -17,6 +17,8 @@ namespace ConsoleApplication.Presentation
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .Build();
 
+
+
             var iocConfigurator = new IoCConfigurator(configuration);
             var coreApplication = iocConfigurator.Container.Resolve<ICoreApplicationService>();
 
