@@ -1,0 +1,47 @@
+﻿@using ConsoleApplication.Application.Services
+@using ConsoleApplication.Domain.Entities
+@page "/counter"
+@rendermode InteractiveServer
+
+<PageTitle>Weather Custom</PageTitle>
+
+<h1>Weather Info</h1>
+
+<p role="status">Location -> @locationInfo</p>
+<p role="status">Time -> @weatherInfo?.Time</p>
+<p role="status">Wind -> @weatherInfo?.Temperature_2m</p>
+<p role="status">Wind -> @weatherInfo?.Wind_Speed_10m</p>
+
+
+<button class="btn btn-primary" @onclick="GetWeatherInfoAsync">Get Data</button>
+<button class="btn btn-primary" @onclick="ResetData">Reset</button>
+
+@code {
+
+    [Inject]
+    private ILocationInfoService? locationInfoService { get; set; }
+
+    [Inject]
+    private IWeatherService? weatherService { get; set; }
+
+    private string? locationInfo;
+    private WeatherInfo? weatherInfo;
+
+    private async Task GetWeatherInfoAsync()
+    {
+        if (weatherService == null || locationInfoService == null)
+            return;
+
+        var weather = await weatherService.GetWeatherInfoAsync();
+        var location = await locationInfoService.GetAsStringAsync();
+
+        locationInfo = location;
+        weatherInfo = weather;
+    }
+
+    private void ResetData()
+    {
+        locationInfo = null;
+        weatherInfo = null;
+    }
+}
