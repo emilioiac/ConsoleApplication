@@ -1,11 +1,14 @@
 using ConsoleApplication.Application;
 using ConsoleApplication.WebApp.Components;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddBlazorBootstrap();
 
 builder.Services.Scan(scan =>
 {
