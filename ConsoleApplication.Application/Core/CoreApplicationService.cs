@@ -9,22 +9,26 @@ namespace ConsoleApplication.Application.Core
         private readonly IReadConsoleService readConsoleService;
         private readonly IWeatherService weatherService;
         private readonly ILocationInfoService locationInfoService;
+        private readonly ILogService logService;
 
         public CoreApplicationService(
             ILogConsoleService logConsoleService,
             IReadConsoleService readConsoleService,
             IWeatherService weatherService,
-            ILocationInfoService locationInfoService
+            ILocationInfoService locationInfoService,
+            ILogService logService
             )
         {
             this.logConsoleService = logConsoleService;
             this.readConsoleService = readConsoleService;
             this.weatherService = weatherService;
             this.locationInfoService = locationInfoService;
+            this.logService = logService;
         }
 
         public async Task RunAsync()
         {
+            logService.MethodBegin();
             var exit = false;
 
             while (!exit)
