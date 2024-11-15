@@ -1,8 +1,11 @@
 ﻿using Autofac;
 using ConsoleApplication.Application;
+using log4net;
+using log4net.Repository;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -52,7 +55,52 @@ namespace ConsoleApplication.Presentation.Utils
 
             builder.RegisterAssemblyModules(assemblies);
 
+            RegisterLogger(builder, configuration);
+
             Container = builder.Build();
+        }
+
+        private void RegisterLogger(ContainerBuilder builder, IConfiguration configuration)
+        {
+
+            var assemblyPath = Assembly.GetExecutingAssembly().Location;
+            var directoryName = Path.GetDirectoryName(assemblyPath);
+
+            var assemblyName = this.GetType().Assembly.GetName().Name;
+            var logConfigFileName = $"{assemblyName}.log4net.config";
+
+            var filePath = Path.Combine(directoryName, logConfigFileName);
+            var fileInfo = new FileInfo(filePath);
+
+            var repoName = $"{assemblyName}.ILoggerRepository";
+
+            ILoggerRepository repo;
+            try
+            {
+                repo = LogManager.GetRepository(repoName);
+            }
+            catch (log4net.Core.LogException)
+            {
+                repo = LogManager.CreateRepository(repoName);
+            }
+
+            if (fileInfo.Exists && !repo.Configured)
+            {
+                var sections = configuration.GetChildren();
+                if (!sections.Any())
+                    return;
+
+                var folderPath = sections.FirstOrDefault(_ => _.Path == "LogFolder");
+                if (folderPath == null)
+                    return;
+
+                GlobalContext.Properties["LogFolder"] = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), folderPath.Value);
+                log4net.Config.XmlConfigurator.Configure(repo, fileInfo);
+            }
+
+            builder
+                .Register(_ => LogManager.GetLogger(repoName, $"{assemblyName}.ILog"))
+                .As<ILog>();
         }
 
         private HttpClient GetHttpClient()
