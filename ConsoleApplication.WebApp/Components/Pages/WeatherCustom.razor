@@ -3,8 +3,6 @@
 @page "/weatherCustom"
 @rendermode InteractiveServer
 
-@* <Spinner Class="me-3" Type="SpinnerType.Dots" Color="SpinnerColor.Primary" Visible="@isLoading"/> *@
-
 @if (this.IsLoading)
 {
     <div style="text-align: center">
@@ -16,14 +14,33 @@
 
     <h1>Weather Info</h1>
 
-    <p role="status">Location -> @locationInfo</p>
-    <p role="status">Time -> @weatherInfo?.Time</p>
-    <p role="status">Wind -> @weatherInfo?.Temperature_2m</p>
-    <p role="status">Temperature -> @weatherInfo?.Wind_Speed_10m</p>
+    <div style="width: 50%">
+        <div class="form-group">
+          <label class="active" for="location">Location </label>
+          <input style="padding-top: 1px;" class="form-control" type="text" id="location" value="@locationInfo" readonly>
+        </div>
 
+        <div class="form-group" style="padding-top: 5px;">
+          <label class="active" for="time">Time </label>
+            <input style="padding-top: 1px;" class="form-control" type="text" id="time" value="@weatherInfo?.Time" readonly>
+        </div>
 
-    <button class="btn btn-primary" @onclick="GetWeatherInfoAsync">Get Data</button>
-    <button class="btn btn-primary" @onclick="ResetData">Reset</button>
+        <div class="form-group" style="padding-top: 5px;">
+          <label class="active" for="temperature">Temperature </label>
+            <input style="padding-top: 1px;" class="form-control" type="text" id="temperature" value="@weatherInfo?.Temperature_2m" readonly>
+        </div>
+
+        <div class="form-group" style="padding-top: 5px;">
+          <label class="active" for="wind">Wind </label>
+            <input style="padding-top: 1px;" class="form-control" type="text" id="wind" value="@weatherInfo?.Wind_Speed_10m" readonly>
+        </div>
+
+        <div class="form-group" style="padding-top: 5px;">
+            <button style="margin-right: 0.8em;" class="btn btn-primary" @onclick="GetWeatherInfoAsync">Get Data</button>
+            <button class="btn btn-primary" @onclick="ResetData">Reset</button>
+        </div>
+    </div>
+
 }
 
 @code {
@@ -33,8 +50,6 @@
 
     [Inject]
     private IWeatherService? weatherService { get; set; }
-
-    // [Inject] protected PreloadService preloadService { get; set; }
 
     private string? locationInfo;
     private WeatherInfo? weatherInfo;
@@ -51,7 +66,6 @@
         if (weatherService == null || locationInfoService == null)
             return;
 
-        // preloadService.Show(SpinnerColor.Light, "Loading data...");
         IsLoading = true;
 
         var weather = await weatherService.GetWeatherInfoAsync();
@@ -62,9 +76,6 @@
         weatherInfo = weather;
 
         IsLoading = false;
-
-
-        // preloadService.Hide();
     }
 
     private void ResetData()

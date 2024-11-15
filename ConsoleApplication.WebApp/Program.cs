@@ -1,5 +1,10 @@
 using ConsoleApplication.Application;
 using ConsoleApplication.WebApp.Components;
+using log4net.Repository;
+using log4net;
+using System.Reflection;
+using Blazorise;
+using Blazorise.Icons.FontAwesome;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +31,17 @@ builder.Services.AddSingleton(customConfig);
 
 var httpClient = GetHttpClient();
 builder.Services.AddSingleton(httpClient);
+
+var logger = RegisterLogger(builder.Configuration);
+builder.Services.AddSingleton(logger);
+
+builder.Services
+    .AddBlazorise(_ =>
+    {
+        _.IconSize = IconSize.Large;
+    })
+    .AddBlazorBootstrap()
+    .AddFontAwesomeIcons();
 
 var app = builder.Build();
 
@@ -88,4 +104,45 @@ HttpClient GetHttpClient()
     httpClient.DefaultRequestHeaders.Add("User-Agent", "ConsoleApplication/1.0 (myEmail@house.com)");
 
     return httpClient;
+}
+
+ILog RegisterLogger(IConfiguration configuration)
+{
+
+    var assemblyPath = Assembly.GetExecutingAssembly().Location;
+    var directoryName = Path.GetDirectoryName(assemblyPath);
+
+    var assemblyName = Assembly.GetCallingAssembly().GetName().Name;
+    var logConfigFileName = $"{assemblyName}.log4net.config";
+
+    var filePath = Path.Combine(directoryName, logConfigFileName);
+    var fileInfo = new FileInfo(filePath);
+
+    var repoName = $"{assemblyName}.ILoggerRepository";
+
+    ILoggerRepository repo;
+    try
+    {
+        repo = LogManager.GetRepository(repoName);
+    }
+    catch (log4net.Core.LogException)
+    {
+        repo = LogManager.CreateRepository(repoName);
+    }
+
+    if (fileInfo.Exists && !repo.Configured)
+    {
+        var sections = configuration.GetChildren();
+        if (!sections.Any())
+            return null;
+
+        var folderPath = sections.FirstOrDefault(_ => _.Path == "LogFolder");
+        if (folderPath == null)
+            return null;
+
+        GlobalContext.Properties["LogFolder"] = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), folderPath.Value);
+        log4net.Config.XmlConfigurator.Configure(repo, fileInfo);
+    }
+
+    return LogManager.GetLogger(repoName, $"{assemblyName}.ILog");
 }
