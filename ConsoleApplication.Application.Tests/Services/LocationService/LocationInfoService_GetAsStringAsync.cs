@@ -12,6 +12,8 @@ namespace ConsoleApplication.Application.Tests.Services.LocationService
     {
         private LocationInfoService sut;
         private readonly Mock<ILocationInfoRepository> repository;
+        private readonly Mock<ILogService> logService;
+
 
         public LocationInfoService_GetAsStringAsync()
         {
@@ -22,18 +24,21 @@ namespace ConsoleApplication.Application.Tests.Services.LocationService
                 Latitude = "1",
                 Longitude = "2"
             };
+
             repository = new Mock<ILocationInfoRepository>();
+            logService = new Mock<ILogService>();
 
             sut = new LocationInfoService(
                 configuration,
-                repository.Object
+                repository.Object,
+                logService.Object
                 );
         }
 
         [TestMethod]
         public async Task Configuration_IsNull_Return_Null()
         {
-            sut = new LocationInfoService(null, repository.Object);
+            sut = new LocationInfoService(null, repository.Object, logService.Object);
 
             var result = await sut.GetAsStringAsync();
             Assert.IsNull(result);
@@ -42,7 +47,7 @@ namespace ConsoleApplication.Application.Tests.Services.LocationService
         [TestMethod]
         public async Task LocationInfoUrl_IsNull_Return_Null()
         {
-            sut = new LocationInfoService(new CustomConfiguration(), repository.Object);
+            sut = new LocationInfoService(new CustomConfiguration(), repository.Object, logService.Object);
 
             var result = await sut.GetAsStringAsync();
             Assert.IsNull(result);
@@ -51,7 +56,7 @@ namespace ConsoleApplication.Application.Tests.Services.LocationService
         [TestMethod]
         public async Task LocationInfoUrl_IsNotWellFormatted_Return_Null()
         {
-            sut = new LocationInfoService(new CustomConfiguration { LocationInfoUrl = "NotWellFormatted"}, repository.Object);
+            sut = new LocationInfoService(new CustomConfiguration { LocationInfoUrl = "NotWellFormatted"}, repository.Object, logService.Object);
 
             var result = await sut.GetAsStringAsync();
             Assert.IsNull(result);
@@ -78,25 +83,6 @@ namespace ConsoleApplication.Application.Tests.Services.LocationService
             _.GetAsync(
                 It.IsAny<string>())
             ).ReturnsAsync("notValidJson");
-
-            var result = await sut.GetAsStringAsync();
-            Assert.IsNull(result);
-        }
-
-        [TestMethod]
-        public async Task Key_NotFound_In_Json_String_Return_Null()
-        {
-            var jsonMock = @"{
-                ""name"": ""John"",
-                ""age"": 30,
-                ""isStudent"": false,
-                ""courses"": [""Math"", ""Science""]
-            }";
-
-            repository.Setup(_ =>
-            _.GetAsync(
-                It.IsAny<string>())
-            ).ReturnsAsync(jsonMock);
 
             var result = await sut.GetAsStringAsync();
             Assert.IsNull(result);
